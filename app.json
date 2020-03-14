@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Slv",
+    "slug": "SlvSave",
+    "privacy": "public",
+    "sdkVersion": "36.0.0",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "ios": {
+     "bundleIdentifier": "com.rukvaak.slvstore"
+   },
+   "android": {
+     "package": "com.rukvaak.slvstore"
+   },
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "ios": {
+      "supportsTablet": true
+    }
+  }
+}
