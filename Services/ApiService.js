@@ -8,7 +8,7 @@ export default class ApiService extends React.Component {
 
   }
 
-   URL ="http://35.223.39.14:3002/";
+   URL ="http://192.168.0.104:3002/";
 
   getCategories(){
     console.log(URL+'getCategories');
@@ -17,7 +17,7 @@ export default class ApiService extends React.Component {
 
 
   checkInternt = () => {
-   return Linking.canOpenURL('http://35.223.39.14:3002/')
+   return Linking.canOpenURL('http://192.168.0.104:3002/')
 };
 
 
@@ -39,6 +39,7 @@ export default class ApiService extends React.Component {
       'Content-Type': 'application/x-www-form-urlencoded'
     }
   }
+  console.log(order);
   const params = new URLSearchParams();
         params.append('cart',order);
     return axios.post(this.URL+'insertCart',params,config)
@@ -68,4 +69,17 @@ console.log(JSON.stringify(tokenPayload))
   params.append('token',JSON.stringify(tokenPayload));
 return axios.post(this.URL+'requestToken',params,config)
 }
+
+
+getOrders(phone){
+  const config = {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+  }
+      const params = new URLSearchParams();
+    params.append('contact',phone);
+  return axios.post(this.URL+'getOrders',params,config)
+}
+
 }

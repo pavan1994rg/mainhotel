@@ -13,6 +13,8 @@ export default class HomeScreen extends Component {
   static navigationOptions = ({ navigation }) => {
     console.log(navigation);
     const { params = {} } = navigation.state;
+    const api = new ApiService();
+    console.log("apiurl"+api.URL+"?url=D:\\Development\\SlvStoreServer\\Server/uploads/slv.jpeg")
     const navigate = () => {
       let cartCount = 0 ;
       AsyncStorage.getItem('cart').then((value) => {
@@ -44,10 +46,13 @@ export default class HomeScreen extends Component {
     headerRight:(<View style={{flexDirection:'row', flexWrap:'wrap'}}>
         <Icon style={{color:'#fff',marginRight:15, }} name="cart-plus" size={30} onPress={() => navigate()} />
         <Icon style={{color:'#fff',marginRight:15, }} name="address-card" size={30} onPress={() =>{navigation.navigate('About')}} />
+        <Icon style={{color:'#fff',marginRight:15, }} name="history" size={30} onPress={() =>{navigation.navigate('Orders')}} />
+
       </View>),
       title:'',
       headerLeft:(<View style={{flexDirection:'row', flexWrap:'wrap'}}>
-      <Image style={{width:40,height:40,margin:20}} source={{uri:'http://35.223.39.14:3002/?url=/home/akshatag145/slv.png'
+       
+      <Image style={{width:40,height:40,margin:20}} source={{uri:"http://192.168.0.104:3002/?url=D:\\Development\\SlvStoreServer\\Server/uploads/slv.jpeg"
      }}/>
     </View>)
     };
@@ -104,21 +109,21 @@ export default class HomeScreen extends Component {
     api.getCategories().then((res)=>{
       console.log(res.data);
           res.data =  res.data.filter((row)=>{
-            return (!row.categoryID.includes('splcat'));
+            return (!row.cateId.includes('splcat'));
           })
-      if(res.data.length%2 === 0){
-        this.state.row_length = res.data.length/2
-      }else{
-        this.state.row_length = res.data.length+1/2
-      }
+      // if(res.data.length%2 === 0){
+      //   this.state.row_length = res.data.length/2
+      // }else{
+      //   this.state.row_length = res.data.length+1/2
+      // }
       res.data.forEach(function(row,index){
           console.log(index);
           if(index%2 == 0){
-            row.image = category_images[index]
+            
             leftcolumns.push(row)
           }
           else{
-            row.image =category_images[index]
+           
             rightcolumns.push(row)
           }
 
@@ -186,11 +191,9 @@ export default class HomeScreen extends Component {
         res.data.forEach(function(row,index){
             console.log(index);
             if(index%2 == 0){
-              row.image = category_images[index]
               leftcolumns.push(row)
             }
             else{
-              row.image =category_images[index]
               rightcolumns.push(row)
             }
 
@@ -219,7 +222,9 @@ export default class HomeScreen extends Component {
       'http://35.223.39.14:3002/?url=/home/akshatag145/slider3.jpeg',
       'http://35.223.39.14:3002/?url=/home/akshatag145/slider4.jpeg',
     ]
-
+    
+    const apiUrl = new ApiService();
+    console.log("url"+apiUrl.URL);
 const deviceWidth = Dimensions.get('window').width;
      return (
        <View style={{flex: 1}}>
@@ -238,11 +243,11 @@ const deviceWidth = Dimensions.get('window').width;
     }}>
     <ImageBackground
          style={{ width: '100%',flex:1}}
-         source={{uri:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDgwmDrTizgycE5yWnNjkYwPOmGpMv-rV5Aqyvpr0Wikmu74on&s'}}>
+         source={{uri:'http://192.168.0.104:3002/?url=D:\\Development\\SlvStoreServer\\Server/uploads/pattern.jpg'}}>
         <Grid style={{margin:5,backgroundColor:'#ffffff'}}>
         <ImageBackground
              style={{ width: '100%',flex:1}}
-             source={{uri:'http://35.223.39.14:3002/?url=/home/akshatag145/pattern.jpeg'}}>
+             source={{uri:'http://192.168.0.104:3002/?url=D:\\Development\\SlvStoreServer\\Server/uploads/pattern.jpg'}}>
           <Row>
             {top_categories.map(top=>
               <Col style={{ flex: 1}}>
@@ -274,14 +279,14 @@ const deviceWidth = Dimensions.get('window').width;
     <Col >
     {this.state.categories_left.map(res=>[
       <TouchableHighlight
-  onPress={() => this.navigate(res.categoryID)}
+  onPress={() => this.navigate(res.cateId)}
   style={{flex:1}}>
       <Row>
         <View style={{ justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: "#ffffff", flex: 1 }}>
         <ImageBackground
              style={{ width: '100%',flex:1}}
-             source={{uri: res.image}}>
-              <Text style={styles.innerText}>{res.categoryName}</Text>
+             source={{uri: apiUrl.URL+"?url="+res.category_image}}>
+              <Text style={styles.innerText}>{res.category_name}</Text>
              </ImageBackground>
       </View>
       </Row>
@@ -291,14 +296,14 @@ const deviceWidth = Dimensions.get('window').width;
     <Col >
     {this.state.categories_right.map(res=>[
       <TouchableHighlight
-  onPress={() => this.navigate(res.categoryID) }
+  onPress={() => this.navigate(res.cateId) }
   style={{flex:1}}>
       <Row>
         <View style={{ justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: "#ffffff", flex: 1}}>
         <ImageBackground
              style={{ width: '100%',flex:1}}
-             source={{uri: res.image}}>
-              <Text style={styles.innerText}>{res.categoryName}</Text>
+             source={{uri: apiUrl.URL+"?url="+res.category_image}}>
+              <Text style={styles.innerText}>{res.category_name}</Text>
              </ImageBackground>
 
       </View>

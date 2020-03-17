@@ -1,4 +1,4 @@
-import React,{ Component } from 'react';
+import React,{ Component} from 'react';
 import { StyleSheet, Text, View,ScrollView,SafeAreaView,Dimensions,Image,ImageBackground,TouchableHighlight,FlatList,AsyncStorage, Alert} from 'react-native';
 import ImageSlider from 'react-native-image-slider';
 import { Button,Card,ListItem } from 'react-native-elements';
@@ -191,6 +191,10 @@ _getPreciseDistance = (to ,from) => {
    }
  }
 
+ alertMessage (){
+ 
+ }
+
   addToCart(){
         let api = new ApiService();
         let order = {};
@@ -225,21 +229,42 @@ _getPreciseDistance = (to ,from) => {
              order.orders = JSON.stringify(cart);
              order.total = this.state.total;
              console.log('stringify'+ JSON.stringify(order));
-             api.addToCart(JSON.stringify(order)).then((res)=>{
-                 console.log('order ===== '+JSON.stringify(res.data));
-                 if(res.data.accepted.length>0){
-                     this.removeItemValue('cart');
-                     showAlert('Order Placed Successfully');
-                     this.state.products = [];
-                 }
-                 else{
-                   showAlert('Something Went Wrong');
-                 }
-                 this.setState({
-                   'loading':false
-                 })
-               this.props.navigation.pop(2)
-             })
+            //  Alert.alert( title 'Hello', body 'I am two option alert. Do you want to cancel me ?', [ {text: 'Yes', onPress: () => console.log('Yes Pressed')}, {text: 'No', onPress: () => console.log('No Pressed'), style: 'cancel'}, ], { cancelable: false } //clicking out side of alert will not cancel )
+            Alert.alert(
+              'Confirm',
+              'Are you sure you want to place order ?',
+              [
+                // {text: 'Ask me later', onPress: () => console.log('Ask me later pressed')},
+                {
+                  text: 'Cancel',
+                  onPress: () => this.setState({
+                    'loading':false
+                  }),
+                  style: 'cancel',
+                },
+                {text: 'Yes', onPress: () => 
+                 api.addToCart(JSON.stringify(order)).then((res)=>{
+                    console.log('order ===== '+JSON.stringify(res.data));
+                    if(res.data.accepted.length>0){
+                        this.removeItemValue('cart');
+   
+                        showAlert('Order Placed Successfully');
+                        this.state.products = [];
+                    }
+                    else{
+                      showAlert('Something Went Wrong');
+                    }
+                    this.setState({
+                      'loading':false
+                    })
+                  this.props.navigation.pop(2)
+                })
+              },
+              ],
+              {cancelable: false},
+            );
+           
+             
 
        })
 

@@ -1,7 +1,7 @@
 import React,{ Component } from 'react';
 import { StyleSheet, Text, View,ScrollView,SafeAreaView,Dimensions,Image,ImageBackground,TouchableHighlight,FlatList,AsyncStorage,ToastAndroid} from 'react-native';
 import ImageSlider from 'react-native-image-slider';
-import { Button,Card,ListItem} from 'react-native-elements';
+import { Button,Card,ListItem,SearchBar} from 'react-native-elements';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { Col, Row, Grid } from "react-native-easy-grid";
 import ApiService from '../Services/ApiService';
@@ -17,6 +17,7 @@ export default class ProductsScreen extends Component{
   static navigationOptions = ({ navigation }) => {
     console.log(navigation);
     const { params = {} } = navigation.state;
+    const api = new ApiService();
     const navigate = () => {
       let cartCount = 0 ;
       AsyncStorage.getItem('cart').then((value) => {
@@ -51,8 +52,8 @@ export default class ProductsScreen extends Component{
 
       title:'',
       headerLeft:(<View style={{flexDirection:'row', flexWrap:'wrap'}}>
-      <Image style={{width:40,height:40,margin:20}} source={{uri:'http://35.223.39.14:3002/?url=/home/akshatag145/slv.png'
-      }}/>
+      <Image style={{width:40,height:40,margin:20}} source={{uri:"http://192.168.0.104:3002/?url=D:\\Development\\SlvStoreServer\\Server/uploads/slv.jpeg"
+     }}/>
       </View>)
     };
 }
@@ -64,10 +65,14 @@ export default class ProductsScreen extends Component{
       'cartCount':0,
       'isreloaded':false,
         'loading':false,
-          'checkinternet':false
+          'checkinternet':false,
+          'search': '',
     }
     this.getproducts = this.getproducts.bind(this);
+    this.updateSearch = this.updateSearch.bind(this);
+    this.searchFilterFunction = this.searchFilterFunction.bind(this);
   }
+  arrayholder = [];
 async setProduct(item,num){
       console.log(item);
       try {
@@ -108,7 +113,22 @@ async setProduct(item,num){
  }
 
   }
+  updateSearch = search => {
+    this.setState({ search });
+  };
 
+  searchFilterFunction = text => {  
+    console.log(text); 
+    this.setState({ search:text }); 
+    const newData = this.arrayholder.filter(item => {      
+      const itemData = `${item.product_name.toUpperCase()}`;
+      console.log(text);
+       const textData = text.toUpperCase();
+       return itemData.indexOf(textData) > -1;    
+    });
+      console.log(JSON.stringify(newData));
+    this.setState({ products: newData });  
+  };
   getproducts(){
     const { navigation } = this.props;
     this.setState({
@@ -136,7 +156,7 @@ async setProduct(item,num){
       api.getproducts(navigation.getParam('catId')).then(res=>{
         console.log('result+++++'+res.data);
         res.data.forEach(function(row){
-         row.product_image = row.product_image.replace('35.232.2.21','35.223.39.14');
+         row.product_image = row.product_image.replace('localhost','192.168.0.104');
         })
         AsyncStorage.getItem('cart').then((value) => {
           console.log("noew"+value);
@@ -162,6 +182,7 @@ async setProduct(item,num){
                 'products':res.data,
                 'isreloaded':true
               })
+              this.arrayholder = this.state.products;
               console.log('products+++++'+JSON.stringify(this.state.products));
       })
 
@@ -254,7 +275,14 @@ async setProduct(item,num){
          }
          console.log("loading"+this.state.loading);
               return([
-
+                 <SearchBar
+                 placeholder="Type Here..."
+                 lightTheme        
+                 round
+                 onChangeText={(text) => this.searchFilterFunction(text)}
+                 autoCorrect={false}
+                 value = {this.state.search}
+                />,
                 <RcIf if={!this.state.loading && this.state.products.length>0}>
                   <FlatList
                   keyExtractor={(product)=>product.product_id}

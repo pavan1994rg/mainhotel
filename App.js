@@ -10,6 +10,7 @@ import LoginScreen from './components/login';
 import Otpscreen from './components/token'
 import AuthLoadingScreen from './components/AuthIndicator'
 import AboutScreen from './components/about'
+import Orders from './components/orders'
 let prop;
 const navigator = createStackNavigator(
   {
@@ -19,7 +20,8 @@ const navigator = createStackNavigator(
     Cart:CartScreen,
     Login:LoginScreen,
     token:Otpscreen,
-    About:AboutScreen
+    About:AboutScreen,
+    Orders:Orders
   },
   {
     initialRouteName: 'Auth',
