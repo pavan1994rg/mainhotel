@@ -11,6 +11,7 @@ import { StackActions, NavigationActions } from 'react-navigation';
 
 export default class Otpscreen extends React.Component{
   static navigationOptions = ({ navigation }) => {
+    const api = new ApiService();
     return {
       headerStyle: {
       backgroundColor: '#FFA500',
@@ -21,8 +22,8 @@ export default class Otpscreen extends React.Component{
     },
   title:'',
   headerLeft:(<View style={{flexDirection:'row', flexWrap:'wrap'}}>
-  <Image style={{width:40,height:40,margin:20}} source={{uri:'http://35.223.39.14:3002/?url=/home/akshatag145/slv.png'
- }}/>
+  {/* <Image style={{width:40,height:40,margin:20}} source={{uri:api.URL+"?url=/home/ubuntu/SlvStoreServer/Server/uploads/slv.jpeg"
+ }}/> */}
 </View>)
 
     };

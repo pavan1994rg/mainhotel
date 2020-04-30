@@ -1,5 +1,5 @@
 import React,{ Component } from 'react';
-import { StyleSheet, Text, View,ScrollView,SafeAreaView,Dimensions,Image,ImageBackground,TouchableHighlight,FlatList,AsyncStorage,ToastAndroid} from 'react-native';
+import { StyleSheet, Text, View,ScrollView,SafeAreaView,Dimensions,Image,ImageBackground,TouchableHighlight,FlatList,AsyncStorage,ToastAndroid,TouchableOpacity} from 'react-native';
 import ImageSlider from 'react-native-image-slider';
 import { Button,Card,ListItem,SearchBar} from 'react-native-elements';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -13,7 +13,7 @@ import Counter from "react-native-counters";
 import InputSpinner from "react-native-input-spinner";
 import { Bubbles, DoubleBounce, Bars, Pulse } from 'react-native-loader';
 
-export default class ProductsScreen extends Component{
+export default class ShowMenu extends Component{
   static navigationOptions = ({ navigation }) => {
     console.log(navigation);
     const { params = {} } = navigation.state;
@@ -52,8 +52,8 @@ export default class ProductsScreen extends Component{
 
       title:'',
       headerLeft:(<View style={{flexDirection:'row', flexWrap:'wrap'}}>
-      <Image style={{width:40,height:40,margin:20}} source={{uri:"http://192.168.0.104:3002/?url=D:\\Development\\SlvStoreServer\\Server/uploads/slv.jpeg"
-     }}/>
+      {/* <Image style={{width:40,height:40,margin:20}} source={{uri:api.URL+"?url=/home/ubuntu/SlvStoreServer/Server/uploads/slv.jpeg"
+     }}/> */}
       </View>)
     };
 }
@@ -67,10 +67,14 @@ export default class ProductsScreen extends Component{
         'loading':false,
           'checkinternet':false,
           'search': '',
+          'food':[],
+          'menu':[]
     }
-    this.getproducts = this.getproducts.bind(this);
+    this.getmenu = this.getmenu.bind(this);
     this.updateSearch = this.updateSearch.bind(this);
     this.searchFilterFunction = this.searchFilterFunction.bind(this);
+    this.onPress = this.onPress.bind(this);
+  
   }
   arrayholder = [];
 async setProduct(item,num){
@@ -122,159 +126,164 @@ async setProduct(item,num){
     this.setState({ search:text }); 
     const newData = this.arrayholder.filter(item => {      
       const itemData = `${item.product_name.toUpperCase()}`;
-      console.log(text);
+      
        const textData = text.toUpperCase();
+       console.log("f"+itemData);
+       console.log("s"+textData);
        return itemData.indexOf(textData) > -1;    
     });
-      console.log(JSON.stringify(newData));
-    this.setState({ products: newData });  
+      
+    this.setState({ food: newData });  
   };
-  getproducts(){
+  getmenu(){
     const { navigation } = this.props;
     this.setState({
       'loading':true
     })
-    const catId = navigation.getParam('catId')
+   
+    
     navigation.addListener('willFocus', () => {
           console.log('componenet ==================================================  ==========')
-      console.log('carrtrt'+navigation.getParam('catId'))
+     
       const api = new ApiService();
       let products;
-      api.checkInternt().then(connection=>{
-        console.log("conn"+connection)
-        if(connection){
-          this.setState({
-            'checkinternet': false
-          })
-        }
-        else{
-          this.setState({
-            'checkinternet': true
-          })
-        }
-      })
-      api.getproducts(navigation.getParam('catId')).then(res=>{
-        console.log('result+++++'+res.data);
-        res.data.forEach(function(row){
-         row.product_image = row.product_image.replace('localhost','192.168.0.104');
-        })
-        AsyncStorage.getItem('cart').then((value) => {
-          console.log("noew"+value);
-            if(value!==null){
-              products = JSON.parse(value)
-              res.data.forEach(function(row){
-
-                row.value = 0;
-                  products.forEach(function(product){
-                    if(product.product_id === row.product_id){
-                      console.log("value ======= ======= ======"+product.value)
-                      row.value = product.value
-                    }
+      let menuItems = [];       
+      api.getMenuCategories().then(result=>{
+           this.setState({'menu':result.data})
+           AsyncStorage.getItem('restaurant').then((value)=>{
+             console.log(value);
+            if(value!== null){
+              api.getFoodItems(JSON.parse(value).id).then(result=>{
+                console.log(JSON.stringify(result.data));
+                result.data.forEach((row)=>{
+                  row.product_image = row.product_image.replace("localhost", "192.168.0.105");
+                })
+                    this.setState({'food':result.data,'isreloaded':true})
+                    AsyncStorage.getItem('cart').then((value) => {
+                      console.log("noew"+value);
+                        if(value!==null){
+                          products = JSON.parse(value)
+                          result.data.forEach(function(row){
+            
+                            row.value = 0;
+                              products.forEach(function(product){
+                                if(product.product_id === row.product_id){
+                                  console.log("value ======= ======= ======"+product.value)
+                                  row.value = product.value
+                                }
+                              })
+                          })
+                        }
+            
+                        this.setState({
+                            'food':[],
+                            'loading':false
+                          })
+                        this.setState({
+                            'food':result.data,
+                            'isreloaded':true
+                          })
+                          this.arrayholder = this.state.products;
+                          console.log('products+++++'+JSON.stringify(this.state.products));
                   })
+                    this.arrayholder = result.data;
               })
             }
-
-            this.setState({
-                'products':[],
-                'loading':false
-              })
-            this.setState({
-                'products':res.data,
-                'isreloaded':true
-              })
-              this.arrayholder = this.state.products;
-              console.log('products+++++'+JSON.stringify(this.state.products));
-      })
+          })
+           
+      })                                              
+      
+     
 
 
-      })
+      // api.getproducts(navigation.getParam('catId')).then(res=>{
+      //   console.log('result+++++'+res.data);
+      //   res.data.forEach(function(row){
+      //    row.product_image = row.product_image.replace('localhost','192.168.0.104');
+      //   })
+       
+
+
+      // })
     })
   }
   componentWillMount(){
 
-    this.getproducts();
+    this.getmenu();
 
   }
 
+  
   renderItem(item){
-        return ([
+    console.log('item'+item.product_image);
+    console.log(this.state.menu.filter(row =>row.catId == item.product_category))
+        return (
           <View>
-            <Grid style={{flex:1,margin:10}} >
-            <Row >
-                <Col style={{width:60,marginRight:10}}>
-                    <Image style={{flex:1,width:60,height:60}} source={{ uri:  item.product_image}}/>
-                </Col>
-                <Col >
-                      <Row>
-                            <Text style={{color:'orange',fontWeight: 'bold', fontSize: 15}}>
-                                {item.product_name}
-                            </Text>
-                      </Row>
-                      <Row>
-                        <RcIf if={item.selling_price!=0}>
-                            <View>
-                              <Text style={{ fontSize: 30,color:"grey",textDecorationLine: 'line-through', textDecorationStyle: 'solid'}}>
-                                 {'\u20B9'}{item.product_price}
-                              </Text>
-                              <Text style={{ fontSize: 30,color:"black"}}>
-                                 {'\u20B9'}{item.selling_price}
-                              </Text>
-                            </View>
-
-                        </RcIf>
-                        <RcIf if={item.selling_price == 0}>
-                          <View>
-                            <Text style={{ fontSize: 30,color:"black"}}>
-                               {'\u20B9'}{item.product_price}
-                            </Text>
-                          </View>
-
-                        </RcIf>
-                      <Text style={{ fontSize:15,color:"black" }}>
-                          <Text>{"\n"} {"   "}for {item.product_quantity} </Text>
-                      </Text>
-                      </Row>
-                </Col>
-                <Col style={{marginLeft:20}}>
-                <Row>
-                </Row>
-                <Row>
-                <InputSpinner
-                max={10}
-                min={0}
-                step={1}
-                colorMax={"#f04048"}
-                colorMin={"#40c5f4"}
-                value={item.value}
-                fontSize={14}
-                width={110}
-                height={30}
-                inputStyle={{margin:2}}
-                buttonFontSize={20}
-                buttonStyle={{width:30,height:30}}
-                onChange={(num) => {
-                this.setProduct(item,num)
-               }}
-                   />
-                </Row>
-                </Col>
-            </Row>
-            <Row style={{borderBottomColor: '#DCDCDC',borderBottomWidth: 2,marginBottom:10,marginTop:30}}>
-            </Row>
-            </Grid>
-          </View>
-
-        ]
+          <Grid style={{flex:1,margin:10}} >
+          <Row >
+              <Col style={{width:60,marginRight:10}}>
+                  <Image style={{width:50,height:75,marginRight:10}} source={{uri:item.product_image}} />
+              </Col>
+              <Col >
+                    <Row>
+                          <Text style={{color:'orange',fontWeight: 'bold', fontSize: 15}}>
+                              {item.product_name} ({this.state.menu.filter(row =>row.catId == item.product_category)[0].category_name})
+                          </Text>
+                    </Row>
+                    <Row>
+                        <View>
+                          <Text style={{ fontSize: 30,color:"black"}}>
+                             {'\u20B9'}{item.product_price}
+                          </Text>
+                        </View>
+  
+                        <Text style={{ fontSize:15,color:"black" }}>
+                        <Text>{"\n"} {"   "}for {item.product_quantity} </Text>
+                    </Text>
+                    </Row>
+              </Col>
+              <Col style={{marginLeft:20}}>
+              <Row>
+              </Row>
+              <Row>
+              <InputSpinner
+              max={10}
+              min={0}
+              step={1}
+              colorMax={"#f04048"}
+              colorMin={"#40c5f4"}
+              value={item.value}
+              fontSize={14}
+              width={110}
+              height={30}
+              inputStyle={{margin:2}}
+              buttonFontSize={20}
+              buttonStyle={{width:30,height:30}}
+              onChange={(num) => {
+              this.setProduct(item,num)
+             }}
+                 />
+              </Row>
+              </Col>
+          </Row>
+          <Row style={{borderBottomColor: '#DCDCDC',borderBottomWidth: 2,marginBottom:10,marginTop:30}}>
+          </Row>
+          </Grid>
+        </View>
+        
         )
       }
-
-    render(){
+      onPress = () => this.props.navigation.navigate('table')
+      render(){
       console.log('render+++')
+      console.log("res"+JSON.stringify(this.state.food))
+  
       if (!this.state.isreloaded) {
             return null
          }
          console.log("loading"+this.state.loading);
               return([
+               
                  <SearchBar
                  placeholder="Type Here..."
                  lightTheme        
@@ -283,15 +292,16 @@ async setProduct(item,num){
                  autoCorrect={false}
                  value = {this.state.search}
                 />,
-                <RcIf if={!this.state.loading && this.state.products.length>0}>
+             
+                <RcIf if={this.state.food.length>0}>
                   <FlatList
                   keyExtractor={(product)=>product.product_id}
-                  data={this.state.products}
-                  renderItem={({ item }) => this.renderItem(item)}
+                  data={this.state.food}
+                  renderItem={({item}) => this.renderItem(item)}
                    />
 
                </RcIf>,
-              <RcIf if={this.state.products.length == 0}>
+              <RcIf if={this.state.food.length == 0}>
                  <View style={{
              position: 'absolute',
            top: 0, left: 0,
@@ -325,3 +335,10 @@ async setProduct(item,num){
     }
 
 }
+
+const style = StyleSheet.create({
+    row: {
+        flex: 1,
+        justifyContent: "space-around"
+    }
+});

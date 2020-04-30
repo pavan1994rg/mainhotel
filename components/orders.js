@@ -1,7 +1,7 @@
 import React,{ Component} from 'react';
 import { StyleSheet, Text, View,ScrollView,SafeAreaView,Dimensions,Image,ImageBackground,TouchableHighlight,FlatList,AsyncStorage, Alert} from 'react-native';
 import ImageSlider from 'react-native-image-slider';
-import { Button,Card,ListItem } from 'react-native-elements';
+import { Button,Card,ListItem,Rating } from 'react-native-elements';
 import { NavigationActions } from 'react-navigation';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { Col, Row, Grid } from "react-native-easy-grid";
@@ -21,6 +21,7 @@ import { getDistance, getPreciseDistance } from 'geolib';
 
 export default class Orders extends Component{
     static navigationOptions = ({ navigation }) => {
+      const api = new ApiService();
         return {
           headerStyle: {
           backgroundColor: '#FFA500',
@@ -31,19 +32,23 @@ export default class Orders extends Component{
         },
       title:'',
       headerLeft:(<View style={{flexDirection:'row', flexWrap:'wrap'}}>
-      <Image style={{width:40,height:40,margin:20}} source={{uri:'http://35.223.39.14:3002/?url=/home/akshatag145/slv.png'
-      }}/>
+      {/* <Image style={{width:40,height:40,margin:20}} source={{uri:api.URL+"?url=/home/ubuntu/SlvStoreServer/Server/uploads/slv.jpeg"
+      }}/> */}
       </View>)
         };
       }
     constructor(){
         super();
         this.reorder= this.reorder.bind(this)
+        this.ratingCompleted = this.ratingCompleted.bind(this);
+        this.submit = this.submit.bind(this);
 
     }
 
     state={
-        'orders':[]
+        'orders':[],
+        'rating':3,
+        'refresh':false
     }
      api = new ApiService();
 
@@ -141,13 +146,26 @@ export default class Orders extends Component{
         
      
      }
+     
     componentWillMount(){
         AsyncStorage.getItem('phone').then((value) => {
             console.log('phone ==== ===== ===== '+ value);
             this.api.getOrders(value).then(res=>{
                 if(res.data != undefined){
                     console.log(res.data);
+                    this.api.selectRating().then(result=>{
+                    res.data.forEach(row=>{
+                      row.disabled = false;
+                      result.data.forEach(order=>{
+                          console.log(row.cartid === order.order_id);
+                          if(row.cartid === order.order_id){
+                            row.disabled = true;
+                          }
+                      })
+                    })
+                  })
                     this.setState({'orders':res.data});
+              
                 }
             })
             // if(value !== null){
@@ -159,29 +177,47 @@ export default class Orders extends Component{
             })
      
     }
+
+    ratingCompleted = (value)=>{
+      console.log(value);
+      this.setState({'rating':value})
+
+
+    }
+    submit(order){
+      let rating ={
+        value:this.state.rating,
+        rest_id:order.restaurant_id,
+        order_id: order.cartid
+      }
+      this.api.submitRating(rating).then(result=>{
+        result.data.forEach(res=>{
+          this.state.orders.forEach(row=>{
+            console.log(row.cartid === res.order_id);
+            if(row.cartid === res.order_id){
+              row.disabled = true;
+              
+              
+            }
+          })
+        })
+        this.setState({'refresh':!this.state.refresh})
+      })
+    }
     renderItem(item){
-        let orders = JSON.parse(item.cartorder)
-        let orderItem = JSON.parse(orders);
-        let text =""
-       console.log("order length"+orderItem.length);
         return (
             <View>
                 <Grid style={{flex:1,margin:10}} >
+                <Text style={{borderRadius:10,borderWidth:2,borderColor:'#FFA500'}}> {item.token} </Text>
                   <Row>
-                { !! orderItem.length>0 ? orderItem.map((order)=>{
-                  text = text + order.product_name  + "("+"\u20B9 "+ order.product_price +")" + " : " +order.product_quantity +" x " + order.value+" || "
-
-      }) : null   
-                }
-                <Text> {text} </Text>
-                </Row>
-                <Row style={{marginTop:7,width:"100%"}}>
-                <Button
-             title="Reorder"
-             type="outline"
-               color="#FFA500"
-               onPress={() => this.reorder(item) }
-         />
+                    <Col size={4}>
+                      <RcIf if={!item.disabled}>
+                      <Rating showRating onFinishRating={this.ratingCompleted} startingValue={3} />
+                      </RcIf>
+                    </Col>
+                    <Col size={3} style={{margin:10}} >
+                    <Button title="submit" onPress={() => this.submit(item)}   disabled = {item.disabled} ></Button>
+                    </Col>
                 </Row>
                 <Row style={{borderBottomColor: '#DCDCDC',borderBottomWidth: 1,marginBottom:10,marginTop:30}}></Row>
              </Grid>
@@ -197,6 +233,7 @@ export default class Orders extends Component{
         keyExtractor={(order)=>order.cartid}
         data={this.state.orders}
         renderItem={({ item }) => this.renderItem(item)}
+        extraData={this.state.refresh}
          />
             </View>
 

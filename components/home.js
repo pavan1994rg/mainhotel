@@ -9,12 +9,13 @@ import RcIf, {RcElse} from 'rc-if';
 import { LinearGradient } from 'expo-linear-gradient';
 import CartButton from './common/cartButton'
 import { SplashScreen } from 'expo';
+import HotelComponent   from './hotelcomponent';
 export default class HomeScreen extends Component {
   static navigationOptions = ({ navigation }) => {
     console.log(navigation);
     const { params = {} } = navigation.state;
-    const api = new ApiService();
-    console.log("apiurl"+api.URL+"?url=D:\\Development\\SlvStoreServer\\Server/uploads/slv.jpeg")
+     api = new ApiService();
+    // console.log("apiurl"+api.URL+"?url=D:\\Development\\SlvStoreServer\\Server/uploads/slv.jpeg")
     const navigate = () => {
       let cartCount = 0 ;
       AsyncStorage.getItem('cart').then((value) => {
@@ -45,15 +46,14 @@ export default class HomeScreen extends Component {
     },
     headerRight:(<View style={{flexDirection:'row', flexWrap:'wrap'}}>
         <Icon style={{color:'#fff',marginRight:15, }} name="cart-plus" size={30} onPress={() => navigate()} />
-        <Icon style={{color:'#fff',marginRight:15, }} name="address-card" size={30} onPress={() =>{navigation.navigate('About')}} />
+        <Icon style={{color:'#fff',marginRight:15, }} name="search" size={30} onPress={() =>{navigation.navigate('search')}} />
         <Icon style={{color:'#fff',marginRight:15, }} name="history" size={30} onPress={() =>{navigation.navigate('Orders')}} />
-
       </View>),
       title:'',
       headerLeft:(<View style={{flexDirection:'row', flexWrap:'wrap'}}>
        
-      <Image style={{width:40,height:40,margin:20}} source={{uri:"http://192.168.0.104:3002/?url=D:\\Development\\SlvStoreServer\\Server/uploads/slv.jpeg"
-     }}/>
+      {/* <Image style={{width:40,height:40,margin:20}} source={{uri:api.URL+"?url=/home/ubuntu/SlvStoreServer/Server/uploads/slv.jpeg"
+     }}/> */}
     </View>)
     };
 }
@@ -63,8 +63,9 @@ export default class HomeScreen extends Component {
         this.navigate = this.navigate.bind(this);
         this.getCategories = this.getCategories.bind(this);
     }
+     api = new ApiService();
   componentWillMount() {
-
+    console.log("hotel"+HotelComponent);
     this.state = {
       "categories_left":[],
       "categories_right":[],
@@ -72,25 +73,9 @@ export default class HomeScreen extends Component {
       'top_categories':[],
       'checkinternet':false
     }
-    const category_images = [
-      'http://35.223.39.14:3002/?url=/home/akshatag145/oilandghee.jpeg',
-      'http://35.223.39.14:3002/?url=/home/akshatag145/pulses-web.jpg',
-      'http://35.223.39.14:3002/?url=/home/akshatag145/fresh-wheat-atta-500x500.jpg',
-      'http://35.223.39.14:3002/?url=/home/akshatag145/choc.jpg',
-      'http://35.223.39.14:3002/?url=/home/akshatag145/breakfast-cereal.png',
-      'http://35.223.39.14:3002/?url=/home/akshatag145/honey_jams_spreads.jpg',
-      'http://35.223.39.14:3002/?url=/home/akshatag145/Instant-Pot-Thai-Peanut-Noodles-500x375.jpg',
-      'http://35.223.39.14:3002/?url=/home/akshatag145/pasta-soup-oh-1895922-x.jpg',
-      'http://35.223.39.14:3002/?url=/home/akshatag145/sauces.webp',
-      'http://35.223.39.14:3002/?url=/home/akshatag145/Disinfectants.jpeg',
-      'http://35.223.39.14:3002/?url=/home/akshatag145/baby.jpeg',
-      'http://35.223.39.14:3002/?url=/home/akshatag145/spices.jpeg',
-      'http://35.223.39.14:3002/?url=/home/akshatag145/personal.jpeg'
-    ]
-
 
     console.log("categories"+this.state.top_categories);
-    const api = new ApiService();
+    
     api.checkInternt().then(connection=>{
       console.log("conn"+connection)
       if(connection){
@@ -104,63 +89,77 @@ export default class HomeScreen extends Component {
         })
       }
     })
-    let leftcolumns =[];
-    let rightcolumns =[];
-    api.getCategories().then((res)=>{
-      console.log(res.data);
-          res.data =  res.data.filter((row)=>{
-            return (!row.cateId.includes('splcat'));
-          })
-      // if(res.data.length%2 === 0){
-      //   this.state.row_length = res.data.length/2
-      // }else{
-      //   this.state.row_length = res.data.length+1/2
-      // }
-      res.data.forEach(function(row,index){
-          console.log(index);
-          if(index%2 == 0){
+    this.getCategories();
+    // let leftcolumns =[];
+    // let rightcolumns =[];
+    // api.getCategories().then((res)=>{
+    //   console.log(res.data);
+    //       res.data =  res.data.filter((row)=>{
+    //         return (!row.cateId.includes('splcat'));
+    //       })
+    //   // if(res.data.length%2 === 0){
+    //   //   this.state.row_length = res.data.length/2
+    //   // }else{
+    //   //   this.state.row_length = res.data.length+1/2
+    //   // }
+    //   res.data.forEach(function(row,index){
+    //       console.log(index);
+    //       if(index%2 == 0){
             
-            leftcolumns.push(row)
-          }
-          else{
+    //         leftcolumns.push(row)
+    //       }
+    //       else{
            
-            rightcolumns.push(row)
-          }
+    //         rightcolumns.push(row)
+    //       }
 
-      })
-      this.setState({
-        'categories_left':leftcolumns,
-        'categories_right':rightcolumns
-      })
+    //   })
+    //   this.setState({
+    //     'categories_left':leftcolumns,
+    //     'categories_right':rightcolumns
+    //   })
 
-    })
+    // })
 
     }
     getCategories(){
-      this.state = {
-        "categories_left":[],
-        "categories_right":[],
-        'row_length':0,
-        'top_categories':[],
-        'checkinternet':false
-      }
-      const category_images = [
-        'http://35.223.39.14:3002/?url=/home/akshatag145/oilandghee.jpeg',
-        'http://35.223.39.14:3002/?url=/home/akshatag145/pulses-web.jpg',
-        'http://35.223.39.14:3002/?url=/home/akshatag145/fresh-wheat-atta-500x500.jpg',
-        'http://35.223.39.14:3002/?url=/home/akshatag145/choc.jpg',
-        'http://35.223.39.14:3002/?url=/home/akshatag145/breakfast-cereal.png',
-        'http://35.223.39.14:3002/?url=/home/akshatag145/honey_jams_spreads.jpg',
-        'http://35.223.39.14:3002/?url=/home/akshatag145/Instant-Pot-Thai-Peanut-Noodles-500x375.jpg',
-        'http://35.223.39.14:3002/?url=/home/akshatag145/pasta-soup-oh-1895922-x.jpg',
-        'http://35.223.39.14:3002/?url=/home/akshatag145/sauces.webp',
-        'http://35.223.39.14:3002/?url=/home/akshatag145/Disinfectants.jpeg',
-        'http://35.223.39.14:3002/?url=/home/akshatag145/baby.jpeg',
-        'http://35.223.39.14:3002/?url=/home/akshatag145/spices.jpeg',
-        'http://35.223.39.14:3002/?url=/home/akshatag145/personal.jpeg'
+      
+     
+     let category_images = [
+      'E:\\Bits\\SlvStoreServer\\Server/uploads/ethnic.jpg',
+      'E:\\Bits\\SlvStoreServer\\Server/uploads/family.png',
+     'E:\\Bits\\SlvStoreServer\\Server/uploads/fast_cusine.png',
+       'E:\\Bits\\SlvStoreServer\\Server/uploads/fastfood.png',
+     'E:\\Bits\\SlvStoreServer\\Server/uploads/fine.png',
+      'E:\\Bits\\SlvStoreServer\\Server/uploads/causal.jpg'
+      ]
+      let categories = [
+        'Ethnic',
+        'Family',
+        'Fast Cusine',
+        'Fast Food',
+        'Fine',
+        'Casual Dining'
+      ]
+      cateIds=[
+        '100',
+        '111',
+        '112',
+        '113',
+        '114',
+        '115'
+
       ]
 
+      let categoryData = [];
+       category_images.forEach((category,index)=>{
+          categoryData.push({cateId:cateIds[index],category_image: category,category_name:categories[index]})
+       })
+       let leftcolumns =[];
+       let rightcolumns =[];
+       
 
+         
       console.log("categories"+this.state.top_categories);
       const api = new ApiService();
       api.checkInternt().then(connection=>{
@@ -169,26 +168,7 @@ export default class HomeScreen extends Component {
           this.setState({
             'checkinternet': false
           })
-        }
-        else{
-          this.setState({
-            'checkinternet': true
-          })
-        }
-      })
-      let leftcolumns =[];
-      let rightcolumns =[];
-      api.getCategories().then((res)=>{
-        console.log(res.data);
-            res.data =  res.data.filter((row)=>{
-              return (!row.categoryID.includes('splcat'));
-            })
-        if(res.data.length%2 === 0){
-          this.state.row_length = res.data.length/2
-        }else{
-          this.state.row_length = res.data.length+1/2
-        }
-        res.data.forEach(function(row,index){
+          categoryData.forEach(function(row,index){
             console.log(index);
             if(index%2 == 0){
               leftcolumns.push(row)
@@ -202,34 +182,70 @@ export default class HomeScreen extends Component {
           'categories_left':leftcolumns,
           'categories_right':rightcolumns
         })
-
+        }
+        else{
+          this.setState({
+            'checkinternet': true
+          })
+        }
       })
+      
+     
+
+      
+      // api.getCategories().then((res)=>{
+      //   console.log(res.data);
+      //       res.data =  res.data.filter((row)=>{
+      //         return (!row.categoryID.includes('splcat'));
+      //       })
+      //   if(res.data.length%2 === 0){
+      //     this.state.row_length = res.data.length/2
+      //   }else{
+      //     this.state.row_length = res.data.length+1/2
+      //   }
+      //   res.data.forEach(function(row,index){
+      //       console.log(index);
+      //       if(index%2 == 0){
+      //         leftcolumns.push(row)
+      //       }
+      //       else{
+      //         rightcolumns.push(row)
+      //       }
+
+      //   })
+      //   this.setState({
+      //     'categories_left':leftcolumns,
+      //     'categories_right':rightcolumns
+      //   })
+
+      // })
     }
     navigate(catID){
-        this.props.navigation.navigate('Products', {
+        this.props.navigation.navigate('Restaurant', {
           catId:catID
         })
     }
    render(){
      const top_categories=[];
+     const apiUrl = new ApiService();
      top_categories.push({'name':'Top Sold','icon':'money','id':'splcat1'})
      top_categories.push({'name':'Seasonal','icon':'cloud','id':'splcat2'})
      top_categories.push({'name':'Top Discounts','icon':'sort-numeric-desc','id':'splcat3'})
      top_categories.push({'name':'Newly Arrived','icon':'truck','id':'splcat4'})
      const images = [
-      'http://35.223.39.14:3002/?url=/home/akshatag145/slide.jpeg',
-      'http://35.223.39.14:3002/?url=/home/akshatag145/slider2.jpeg',
-      'http://35.223.39.14:3002/?url=/home/akshatag145/slider3.jpeg',
-      'http://35.223.39.14:3002/?url=/home/akshatag145/slider4.jpeg',
+      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&w=1000&q=80',
+      'https://im1.dineout.co.in/images/uploads/restaurant/sharpen/6/x/w/p63342-15686142055d7f273d3bce7.jpg?tr=tr:n-medium'
     ]
-    
-    const apiUrl = new ApiService();
+      console.log("left ==="+this.state.categories_left);
+
+   
     console.log("url"+apiUrl.URL);
 const deviceWidth = Dimensions.get('window').width;
      return (
        <View style={{flex: 1}}>
+         
         <ScrollView >
-   <View >
+      <View >
        <ImageSlider
        autoPlayWithInterval={3000}
        images={images}
@@ -241,13 +257,13 @@ const deviceWidth = Dimensions.get('window').width;
       justifyContent: 'center',
       alignItems: 'stretch',
     }}>
-    <ImageBackground
+    {/* <ImageBackground
          style={{ width: '100%',flex:1}}
-         source={{uri:'http://192.168.0.104:3002/?url=D:\\Development\\SlvStoreServer\\Server/uploads/pattern.jpg'}}>
+         source={{uri:apiUrl.URL+"?url=E:\\Bits\\SlvStoreServer\\Server/uploads/pattern.jpg"}}>
         <Grid style={{margin:5,backgroundColor:'#ffffff'}}>
         <ImageBackground
              style={{ width: '100%',flex:1}}
-             source={{uri:'http://192.168.0.104:3002/?url=D:\\Development\\SlvStoreServer\\Server/uploads/pattern.jpg'}}>
+             source={{uri:apiUrl.URL+"?url=E:\\Bits\\SlvStoreServer\\Server/uploads/pattern.jpg"}}>
           <Row>
             {top_categories.map(top=>
               <Col style={{ flex: 1}}>
@@ -273,7 +289,21 @@ const deviceWidth = Dimensions.get('window').width;
             </Row>
             </ImageBackground>
           </Grid>
-</ImageBackground>
+</ImageBackground> */}
+<ImageBackground
+         style={{ width: '100%',flex:1}}
+         source={{uri:"https://lh3.googleusercontent.com/proxy/dOMiohaHeZeFkQx2ca_mW2PXGcXa1B_y2hmWVi38-TSqV5Mvn1H_wUTWl61LGSbUg_-mXrfTBKK1bZ5l3Bmx_dJUx2FFqUL0n_oID-Uj-A6892YvCtHcRg05rsGRzwMQmEmHoArv"}}>
+  <Text style={{fontWeight:'bold',margin:10}}>Top Hotels</Text>
+<HotelComponent props={this.props}/>
+
+</ImageBackground>   
+<ImageBackground
+         style={{ width: '100%',flex:1}}
+         source={{uri:"https://images.template.net/wp-content/uploads/2014/10/Untitled-4-copy1.jpg"}}>
+<Text style={{fontWeight:'bold',color:'#fff',margin:5,fontSize:15}}>
+   Restaurant Categories
+</Text>  
+</ImageBackground> 
     <Grid style={{height:Dimensions.get('window').height,flexDirectfion:'column' }}>
 
     <Col >

@@ -1,5 +1,5 @@
 import React,{ Component} from 'react';
-import { StyleSheet, Text, View,ScrollView,SafeAreaView,Dimensions,Image,ImageBackground,TouchableHighlight,FlatList,AsyncStorage, Alert} from 'react-native';
+import { StyleSheet, Text, View,ScrollView,SafeAreaView,Dimensions,Image,ImageBackground,TouchableHighlight,FlatList,AsyncStorage, Alert,Modal} from 'react-native';
 import ImageSlider from 'react-native-image-slider';
 import { Button,Card,ListItem } from 'react-native-elements';
 import { NavigationActions } from 'react-navigation';
@@ -18,9 +18,11 @@ import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 import { Bubbles, DoubleBounce, Bars, Pulse } from 'react-native-loader';
 import { getDistance, getPreciseDistance } from 'geolib';
+import { CreditCardInput, LiteCreditCardInput } from "react-native-credit-card-input"
 
 export default class CartScreen extends Component{
   static navigationOptions = ({ navigation }) => {
+    const api = new ApiService();
     return {
       headerStyle: {
       backgroundColor: '#FFA500',
@@ -31,8 +33,7 @@ export default class CartScreen extends Component{
     },
   title:'',
   headerLeft:(<View style={{flexDirection:'row', flexWrap:'wrap'}}>
-  <Image style={{width:40,height:40,margin:20}} source={{uri:'http://35.223.39.14:3002/?url=/home/akshatag145/slv.png'
-  }}/>
+  
   </View>)
     };
   }
@@ -44,8 +45,13 @@ export default class CartScreen extends Component{
       'loading':false,
       'location': null,
     'errorMessage': null,
-    'outrange':false
+    'outrange':false,
+    'restaurant':'',
+    'seats':0,
+    'modalVisible': false,
+    'card':{}
     }
+    this.paycard = this.paycard.bind(this);
   }
   componentWillMount(){
     if (Platform.OS === 'android' && !Constants.isDevice) {
@@ -63,6 +69,14 @@ export default class CartScreen extends Component{
       let products;
       let cart=[];
       let total=0;
+      AsyncStorage.getItem('restaurant').then((value)=>{
+        console.log(JSON.stringify(value))
+        this.setState({'restaurant':JSON.parse(value).name})
+        AsyncStorage.getItem('table').then((value)=>{
+          console.log(value)
+          this.setState({'seats':value})
+        })
+      }) 
       AsyncStorage.getItem('cart').then((value) => {
         console.log(value);
           if(value!==null){
@@ -191,11 +205,32 @@ _getPreciseDistance = (to ,from) => {
    }
  }
 
+
  alertMessage (){
  
  }
 
-  addToCart(){
+_onChange =(form)=>{
+console.log(form);
+let info = {
+  number:form.values.number.trim(),
+  month:form.values.expiry.split('/')[0],
+  year:form.values.expiry.split('/')[1],
+  cvc:form.values.cvc
+}
+this.setState({
+  'card':info
+})
+
+}
+showAlert = (message) =>{
+      Alert.alert(
+         message
+      )
+}
+
+  addToCart(token){
+   
         let api = new ApiService();
         let order = {};
         let cart = [];
@@ -204,10 +239,8 @@ _getPreciseDistance = (to ,from) => {
          message
       )
    }
-   if (this.state.total < 600){
-       showAlert('Order Must be Greater than Rupees 600');
-   }
-   else{
+  
+  
      AsyncStorage.getItem('phone').then((value) => {
        console.log('phone ==== ===== ===== '+ value);
        if(value !== null){
@@ -230,46 +263,39 @@ _getPreciseDistance = (to ,from) => {
              order.total = this.state.total;
              console.log('stringify'+ JSON.stringify(order));
             //  Alert.alert( title 'Hello', body 'I am two option alert. Do you want to cancel me ?', [ {text: 'Yes', onPress: () => console.log('Yes Pressed')}, {text: 'No', onPress: () => console.log('No Pressed'), style: 'cancel'}, ], { cancelable: false } //clicking out side of alert will not cancel )
-            Alert.alert(
-              'Confirm',
-              'Are you sure you want to place order ?',
-              [
-                // {text: 'Ask me later', onPress: () => console.log('Ask me later pressed')},
-                {
-                  text: 'Cancel',
-                  onPress: () => this.setState({
-                    'loading':false
-                  }),
-                  style: 'cancel',
-                },
-                {text: 'Yes', onPress: () => 
-                 api.addToCart(JSON.stringify(order)).then((res)=>{
-                    console.log('order ===== '+JSON.stringify(res.data));
-                    if(res.data.accepted.length>0){
-                        this.removeItemValue('cart');
-   
-                        showAlert('Order Placed Successfully');
-                        this.state.products = [];
-                    }
-                    else{
-                      showAlert('Something Went Wrong');
-                    }
-                    this.setState({
-                      'loading':false
-                    })
-                  this.props.navigation.pop(2)
-                })
-              },
-              ],
-              {cancelable: false},
-            );
+          AsyncStorage.getItem('restaurant').then((restaurant)=>{
+            if(restaurant){
+              order.restId = JSON.parse(restaurant).id
+              order.token = token
+            
+            }
+            api.addToCart(JSON.stringify(order)).then((res)=>{
+              console.log('order ===== '+JSON.stringify(res.data));
+              if(res.data.accepted.length>0){
+                  this.removeItemValue('cart');
+                  this.removeItemValue('restaurant');
+
+                  showAlert('Order Placed Successfully');
+                  this.state.products = [];
+              }
+              else{
+                showAlert('Something Went Wrong');
+              }
+              this.setState({
+                'loading':false
+              })
+              this.props.navigation.popToTop()
+          })  
+          })
+          
+            
            
              
 
        })
 
      })
-   }
+   
 
 
   }
@@ -340,11 +366,39 @@ _getPreciseDistance = (to ,from) => {
         </Grid>
         )
       }
+    
+     toggleModal(visible) {
+        this.setState({ modalVisible: visible });
+     }
+     paycard = ()=>{
+      let api = new ApiService();
+      api.validate(this.state.card).then(result=>{
+        console.log(result.data);
+        if(result.data.code){
+          this.showAlert(result.data.code);
+        }
+        if(result.data.id){
+          let charge ={
+            token:result.data.id,
+            amount:this.state.total
+          }
+          api.charge(charge).then(result=>{
+            console.log(result.data);
+            if(result.data.paid){
+              this.showAlert("Payment Successfull");
 
+              this.addToCart(charge.token)
+            }
+          })
+        }
+      })
+     }
     render(){
   console.log(this.state.products);
               return(
     <View style={{flex: 1}}>
+       <Text style={{color:'orange',fontWeight: 'bold',fontSize:20,margin:10 }}>Restaurant : {this.state.restaurant}</Text>
+              <Text style={{color:'orange',fontWeight: 'bold',fontSize:20,margin:10 }}>Seats : {this.state.seats}</Text>
     <View style={{flex: .9}}>
       <RcIf if={!this.state.loading}>
         <FlatList
@@ -388,12 +442,41 @@ _getPreciseDistance = (to ,from) => {
   title="Place Order"
   color="#90A4AE"
   disabled = {this.state.outrange}
-  onPress={() => this.addToCart() }
+  onPress={() => this.toggleModal(true) }
          />
      </RcIf>
       </View>
-</View>
 
+      <View >
+  <Modal animationType = {"slide"} transparent = {false}
+     visible = {this.state.modalVisible}
+     onRequestClose = {() => { console.log("Modal has been closed.") } }>
+     
+     <View style = {styles.modal}>      
+        <TouchableHighlight onPress = {() => {
+           this.toggleModal(!this.state.modalVisible)}}>
+           <Text style = {styles.text}>Close</Text>
+        </TouchableHighlight>
+
+     </View>
+     <View style={{marginBottom:30}} >
+     <CreditCardInput onChange={this._onChange} />
+     </View>
+     <View style={[{ width: "100%" }]}>
+      <RcIf if={!this.state.loading}>
+    <Button
+  title="Pay Card"
+  color="#90A4AE"
+  disabled = {this.state.outrange}
+  onPress={() => this.paycard() }
+         />
+     </RcIf>
+      </View>
+  </Modal>
+
+</View>
+</View>
+  
 
               )
 
@@ -401,3 +484,19 @@ _getPreciseDistance = (to ,from) => {
     }
 
 }
+
+const styles = StyleSheet.create ({
+   container: {
+      alignItems: 'center',
+      backgroundColor: '#ede3f2',
+      padding: 100
+   },
+   modal: {
+      flex: 1,
+      padding:20
+   },
+   text: {
+      color: '#3f2949',
+      textAlign:'right'
+   }
+})
